@@ -1,8 +1,7 @@
-const ConvertLib = artifacts.require("ConvertLib");
-const MetaCoin = artifacts.require("MetaCoin");
+//const SymbolManager = artifacts.require("SymbolManager");
+const TrackerPriceFeed = artifacts.require("TrackerPriceFeed");
 
 module.exports = function(deployer) {
-  deployer.deploy(ConvertLib);
-  deployer.link(ConvertLib, MetaCoin);
-  deployer.deploy(MetaCoin);
+  //deployer.deploy(SymbolManager);
+  deployer.deploy(TrackerPriceFeed);
 };
