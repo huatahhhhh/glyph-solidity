@@ -1,10 +1,10 @@
 const { expectRevert } = require("@openzeppelin/test-helpers");
 const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants");
-const Contract = artifacts.require("SymbolManager");
+const Contract = artifacts.require("PriceFeedManager");
 
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
 
-contract('SymbolManager', ([owner, other]) => {
+contract('PriceFeedManager', ([owner, other]) => {
   before(async () => {
     this.owner = owner;
     this.other = other;

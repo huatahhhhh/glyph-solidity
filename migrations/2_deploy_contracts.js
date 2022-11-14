@@ -1,7 +1,8 @@
 //const SymbolManager = artifacts.require("SymbolManager");
-const TrackerPriceFeed = artifacts.require("TrackerPriceFeed");
+const PriceFeedManager = artifacts.require("PriceFeedManager");
+const UserManager = artifacts.require("UserManager");
 
 module.exports = function(deployer) {
-  //deployer.deploy(SymbolManager);
-  deployer.deploy(TrackerPriceFeed);
+  deployer.deploy(PriceFeedManager);
+  deployer.deploy(UserManager);
 };

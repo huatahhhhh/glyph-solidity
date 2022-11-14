@@ -12,7 +12,7 @@ interface ISymbolManager {
 	function setOracle(string memory symbol, address oracle) external;
 }
 
-contract SymbolManager is Ownable, ISymbolManager{
+abstract contract SymbolManager is Ownable, ISymbolManager{
 	struct symbolInformation{
 		//string symbol;
 		address oracle;
@@ -21,9 +21,6 @@ contract SymbolManager is Ownable, ISymbolManager{
 
 	string[] public symbolArray;
 	mapping(string=>symbolInformation) public symbolInfoMap;
-
-  constructor() public {
-  }
 
 	function checkSymbolExists(string memory symbol) public view returns (bool) {
 		for (uint i=0; i<symbolArray.length; i++){
