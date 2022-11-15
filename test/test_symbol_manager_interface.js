@@ -4,7 +4,7 @@ const Contract = artifacts.require("PriceFeedManager");
 
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
 
-contract('PriceFeedManager', ([owner, other]) => {
+contract('PriceFeedManager', async ([owner, other]) => {
   before(async () => {
     this.owner = owner;
     this.other = other;
@@ -127,7 +127,7 @@ contract('PriceFeedManager', ([owner, other]) => {
       );
     });
     it("symbol must exist", async () => {
-      expectRevert(
+      await expectRevert(
         this.contract.activateSymbol(this.symbol),
         "Symbol does not exist"
       );
@@ -135,7 +135,7 @@ contract('PriceFeedManager', ([owner, other]) => {
     it("cannot be done by non-owners", async () => {
       await this.contract.registerSymbol(this.symbol);
       await this.contract.setOracle(this.symbol, this.address)
-      expectRevert(
+      await expectRevert(
         this.contract.activateSymbol(
           this.symbol,
           { from: this.other }
@@ -147,7 +147,7 @@ contract('PriceFeedManager', ([owner, other]) => {
     });
     it("address cannot be 0x00", async () => {
       await this.contract.registerSymbol(this.symbol);
-      expectRevert(
+      await expectRevert(
         this.contract.activateSymbol(
           this.symbol
         ),
@@ -180,13 +180,13 @@ contract('PriceFeedManager', ([owner, other]) => {
       );
     });
     it("symbol must exist", async () => {
-      expectRevert(
+      await expectRevert(
         this.contract.deactivateSymbol("bad_symbol"),
         "Symbol does not exist"
       );
     });
     it("cannot be done by non-owners", async () => {
-      expectRevert(
+      await expectRevert(
         this.contract.deactivateSymbol(
           this.symbol,
           { from: this.other }

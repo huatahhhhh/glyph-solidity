@@ -11,7 +11,8 @@ module.exports = {
       port: 8546,
       //provider: () => new HDWalletProvider(mnemonic, `http://127.0.0.1:8545`),
       network_id: "*", // Match any network id
-      gas: 6721975
+      gas: 6721975,
+      networkCheckTimeout: 50000
     },
     lfork: {
       provider: () => new HDWalletProvider(mnemonic_fork, `http://127.0.0.1:9393`),
