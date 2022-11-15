@@ -36,7 +36,7 @@ abstract contract UserManager is Ownable, IUserManager{
 		userData[_address] = value;
 	}
 
-	function isUser(address _address) external view returns (bool) {
+	function isUser(address _address) public view returns (bool) {
 		return userData[_address];
 	}
 }

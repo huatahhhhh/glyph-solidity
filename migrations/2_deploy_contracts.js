@@ -1,8 +1,8 @@
 //const SymbolManager = artifacts.require("SymbolManager");
 const PriceFeedManager = artifacts.require("PriceFeedManager");
-const UserManager = artifacts.require("UserManager");
+const PredictionManager = artifacts.require("PredictionManager");
 
-module.exports = function(deployer) {
-  deployer.deploy(PriceFeedManager);
-  deployer.deploy(UserManager);
+module.exports = async function(deployer) {
+  await deployer.deploy(PriceFeedManager);
+  await deployer.deploy(PredictionManager, PriceFeedManager.address, 60*60*24);
 };

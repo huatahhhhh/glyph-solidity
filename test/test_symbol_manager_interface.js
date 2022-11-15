@@ -9,7 +9,7 @@ contract('PriceFeedManager', ([owner, other]) => {
     this.owner = owner;
     this.other = other;
   });
-  describe("When symbol is NOT registered..", () => {
+  describe("When symbol is NOT registered..", async () => {
     before( async () => {
       this.symbol = "symbol000";
       this.contract = await Contract.new({ from: this.owner });

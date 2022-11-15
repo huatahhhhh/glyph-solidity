@@ -9,12 +9,12 @@ module.exports = {
       host: "localhost",
       port: 8546,
       network_id: "*", // Match any network id
-      gas: 5000000
+      gas: 20000000
     },
-    mumbai_fork: {
+    lfork: {
       provider: () => new HDWalletProvider(mnemonic_fork, `http://127.0.0.1:9393`),
       network_id: "80001", // Match any network id
-      gas: 5000000
+      gas: 30000000
     },
     mumbai_testnet: {
       provider: () => new HDWalletProvider(mnemonic_mumbai, `https://polygon-mumbai.infura.io/v3/a097978523884dd59b3bdbc9781f8de9`),
