@@ -221,13 +221,13 @@ contract('PredictionManager', ([owner, other1, other2]) => {
 
       var pred = await this.contract.livePredictions(0);
       assert.equal(pred['user'], this.other1);
-      assert.equal(pred['predTimeStamp'], predTimeStamp);
+      assert.equal(pred['predTimestamp'], predTimeStamp);
       assert.equal(pred['symbol'], "BTC");
       assert.equal(pred['predDirection'], false);
       assert.equal(pred['initialPrice']['price'], BTC_PRICE);
-      assert.equal(pred['initialPrice']['timeStamp'], this.now.toString());
+      assert.equal(pred['initialPrice']['timestamp'], this.now.toString());
       assert.equal(pred['finalPrice']['price'], 0);
-      assert.equal(pred['finalPrice']['timeStamp'], 0);
+      assert.equal(pred['finalPrice']['timestamp'], 0);
     });
   });
 });
