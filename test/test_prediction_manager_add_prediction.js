@@ -29,6 +29,7 @@ contract('PredictionManager', ([owner, other1, other2]) => {
     await this.priceFeedContract.setOracle("BTC", CHAINLINK_BTC_FEED);
     await this.priceFeedContract.activateSymbol("BTC");
     await this.priceFeedContract.setTimeStamp(TIMESTAMP);
+    await this.priceFeedContract.setPrice(BTC_PRICE);
     var result = await this.priceFeedContract.getSymbolLatestPrice("BTC");
     var price = result[0].toNumber();
     var timestamp = result[1].toNumber();

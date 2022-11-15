@@ -133,15 +133,16 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	function _checkPredictionExpired(Prediction memory pred) private view returns (bool expired){
 		string memory symbol = pred.symbol;
 		int noww = SafeCast.toInt256(block.timestamp);
-		if(!_symbolManager.checkSymbolActive(symbol)){
-			int predExpiry = SafeCast.toInt256(pred.predTimeStamp + pred.predDuration);
-			if (noww - predExpiry > timeTolerance.mul(5)){
+		int predExpiry = SafeCast.toInt256(pred.predTimeStamp + pred.predDuration);
+		if (noww.sub(predExpiry) > timeTolerance){
+			if(!_symbolManager.checkSymbolActive(symbol)){
 				return true;
 			}
-		} else {
-			(, uint feedTimestamp) = _priceFeedManager.getSymbolLatestPrice(symbol);
-			if (noww - SafeCast.toInt256(feedTimestamp) > timeTolerance.mul(5)){
-				return true;
+			else{
+				(, uint feedTimestamp) = _priceFeedManager.getSymbolLatestPrice(symbol);
+				if (SafeCast.toInt256(feedTimestamp).sub(predExpiry) > timeTolerance){
+					return true;
+				}
 			}
 		}
 		return false;
@@ -159,19 +160,22 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		_removeFromLivePredictions(indx);
 	}
 
-	function _checkPredictionReady(Prediction memory pred) private view returns (bool ready){
+	function _checkPredictionReady(Prediction memory pred) private view returns (bool){
 		string memory symbol = pred.symbol;
 
 		if(!_symbolManager.checkSymbolActive(symbol)){
 			return false;
 		}
+
+		if(!isUser(pred.user)){
+			return false;
+		}
+
 		uint predExpiry = pred.predTimeStamp.add(pred.predDuration);
 		(, uint feedTimestamp) = _priceFeedManager.getSymbolLatestPrice(symbol);
- 		return (
-			_timeWithinTolerance(
-				predExpiry.add(SafeCast.toUint256(timeTolerance)), 
-				feedTimestamp)
-		);
+
+		int diff = SafeCast.toInt256(feedTimestamp).sub(SafeCast.toInt256(predExpiry));
+ 		return ((diff >= 0 ) && (diff < timeTolerance));	
 	}
 	
 	function _handlePredictionReady(uint indx) private {
@@ -236,8 +240,10 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
   {
 		uint state = 0;
 		uint indx;
+		uint i;
 
-		for (uint i=livePredictions.length-1; i >= 0; i--){
+		for (int j=SafeCast.toInt256(livePredictions.length)-1; j>= 0; j--){
+			i = SafeCast.toUint256(j);
 			Prediction memory pred = livePredictions[i];
 			if (_checkPredictionReady(pred)){
 				indx = i;
@@ -251,14 +257,18 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 				break;
 			}
 		}
+
+		uint[2] memory result;
+		performData = abi.encode(result);
+
 		if (upkeepNeeded){
-			uint[2] memory result;
 			result[0] = state;
 			result[1] = indx;
 			performData = abi.encode(result);
 		}
-    return (upkeepNeeded, performData);
-  }
+
+		return (upkeepNeeded, performData);
+	}
 
 	function performUpkeep(bytes calldata performData) 
 		external {
@@ -274,5 +284,3 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		}
   }
 }
-	/*function checkUpkeep(){} // check all pending predictions for expiry*/
-	/*function performUpkeep () {} // eval 1 prediciton at a time*/

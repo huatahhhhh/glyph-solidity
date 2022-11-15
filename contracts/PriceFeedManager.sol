@@ -17,20 +17,24 @@ contract PriceFeedManager is ChainlinkFeedConsumer, SymbolManager, IPriceFeedMan
 }
 
 contract TestPriceFeedManager is PriceFeedManager{
-	uint public timeStamp;
+	uint public mockTimeStamp;
+	int public mockPrice;
 
 	function setTimeStamp(uint ts) public{
-		timeStamp = ts;
+		mockTimeStamp = ts;
+	}
+
+	function setPrice(int price) public{
+		mockPrice = price;
 	}
 
 	function updateTimeStamp() public{
-		timeStamp = block.timestamp;
+		mockTimeStamp = block.timestamp;
 	}
 
 	function getSymbolLatestPrice(string memory symbol) override external view returns (int price, uint) {
 		require(checkSymbolActive(symbol), "Symbol needs to be active");
-		price = 1648680000000;
-		return (price, timeStamp);
+		return (mockPrice, mockTimeStamp);
 	}
 }
 

@@ -2,14 +2,16 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 const fs = require('fs');
 const mnemonic_fork = fs.readFileSync(".fork.secret").toString().trim();
 const mnemonic_mumbai = fs.readFileSync(".mumbai.secret").toString().trim();
+const mnemonic = fs.readFileSync(".ganache.secret").toString().trim();
 
 module.exports = {
   networks: {
     development: {
       host: "localhost",
       port: 8546,
+      //provider: () => new HDWalletProvider(mnemonic, `http://127.0.0.1:8545`),
       network_id: "*", // Match any network id
-      gas: 20000000
+      gas: 6721975
     },
     lfork: {
       provider: () => new HDWalletProvider(mnemonic_fork, `http://127.0.0.1:9393`),
