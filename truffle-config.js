@@ -9,9 +9,14 @@ module.exports = {
     development: {
       host: "localhost",
       port: 8546,
-      //provider: () => new HDWalletProvider(mnemonic, `http://127.0.0.1:8545`),
       network_id: "*", // Match any network id
       gas: 6721975,
+      networkCheckTimeout: 50000
+    },
+    gcli: {
+      provider: () => new HDWalletProvider(mnemonic, `http://127.0.0.1:8545`),
+      network_id: "*", // Match any network id
+      gas: 5000000,
       networkCheckTimeout: 50000
     },
     lfork: {

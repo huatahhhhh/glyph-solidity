@@ -14,24 +14,6 @@ const TIME_TOL = 7*ONE_DAY; // 1 week
 const BTC_PRICE = 1648680000000;
 const BTC_TIMESTAMP = 1668445371;
 
-function getUtcSeconds(){
-  const now = new Date(); 
-  const utcMilllisecondsSinceEpoch = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-  const utcSecondsSinceEpoch = Math.round(utcMilllisecondsSinceEpoch / 1000);
-  return utcSecondsSinceEpoch;
-}
-
-/*
-performUpkeep
-When prediction is not expired, nothing happens
-When prediction is not ready , nothing happens
-When prediction is expired, 
-- check resutls
-When prediction is ready, 
-- long and ret positive
-- long and ret negative - short and ret positive
-- short and ret negative
-*/
 contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
   async function setUpPriceFeedContract(vm){
     /* Set up test price feed contract and activate btc symbol
@@ -97,18 +79,6 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
     // make a prediction now with 3 months in advance
     await createPrediction(this.contract, this.predictFor, this.predictAt, THREE_MONTHS); // prediction of interest
   });
-
-  /*
-   * CHECKUPKEEP
-  When symbol is inactive, 
-  - now before expiry + tolerance -> prediciton nothing
-  - now after expiry + tolerance -> prediciton expires
-
-  When symbol active, When price feed 
-  - before expiry -> prediction not ready
-  - between expiry to tolerance -> prediction ready + for all, if user has been removed, prediction will never be ready
-  - after expiry to tolerance -> prediction expires
-  */
 
   describe("When there are no predictions..", async () => {
     beforeEach( async () => {

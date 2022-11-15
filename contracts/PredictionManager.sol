@@ -12,7 +12,7 @@ import './UserManager.sol';
 
 interface IPredictionManager {
 	function createPrediction(address user,
-														uint predTimeStamp,
+														uint predTimestamp,
 														string memory symbol,
 														bool predDirection,
 														uint predDuration,
@@ -31,12 +31,12 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 
 	struct PriceFeedResult {
 		int price;
-		uint timeStamp;
+		uint timestamp;
 	}
 
 	struct Prediction {
 		address user;
-		uint predTimeStamp;
+		uint predTimestamp;
 		string symbol;
 		bool predDirection;
 		uint predDuration; 
@@ -46,9 +46,9 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	}
 
 	struct TrackRecord {
-		uint num_pred_pending;
-		uint num_pred_error;
-		uint num_pred_completed;
+		uint num_pending;
+		uint num_error;
+		uint num_completed;
 		uint num_correct;
 		int avg_return;
 	}
@@ -57,7 +57,8 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	ISymbolManager private _symbolManager;
 	IPriceFeedManager private _priceFeedManager;
 	int public timeTolerance;
-	int public decimals = 8;
+	uint public decimals = 8;
+	int private _pad;
 
 	Prediction[] public livePredictions;
 	mapping(address => TrackRecord) public userTrackRecords;
@@ -67,6 +68,11 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		timeTolerance	= tolSeconds;
 		_symbolManager = ISymbolManager(priceFeedManagerAddress);
 		_priceFeedManager = IPriceFeedManager(priceFeedManagerAddress);
+
+		_pad = 1;
+		for (uint i=0; i < decimals; i++){
+			_pad = _pad.mul(10);
+		}
 	}
 
 	modifier predictActiveSymbolOnly(string memory symbol){
@@ -85,6 +91,15 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		_;
 	}
 
+	function numLivePredictions() external view returns (uint) {
+		return livePredictions.length;
+	}
+
+	function userScore(address _address) external view returns (TrackRecord memory){
+		TrackRecord memory record = userTrackRecords[_address];
+		return record;
+	}
+
 	function _timeWithinTolerance(uint timestamp1, uint timestamp2) private view returns (bool){
 		int diff = SafeCast.toInt256(timestamp1) - SafeCast.toInt256(timestamp2);
 		diff = diff >= 0 ? diff : -diff;
@@ -96,7 +111,7 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	}
 
 	function createPrediction(address user,
-														uint predTimeStamp,
+														uint predTimestamp,
 														string memory symbol,
 														bool predDirection,
 														uint predDuration,
@@ -106,20 +121,20 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 														activeUserPredictOnly(user) 
 														predictActiveSymbolOnly(symbol){
 
-		require(_timeWithinTolerance(block.timestamp, predTimeStamp),
+		require(_timeWithinTolerance(block.timestamp, predTimestamp),
 						"Block timestamp and prediction timestamp is beyond tolerance");
 		require(SafeCast.toInt256(predDuration) > timeTolerance.mul(2),
 						"Prediction duration needs to be more than 2 * tolerance");
 
 		(int initPrice, uint initPriceTimestamp) = _priceFeedManager.getSymbolLatestPrice(symbol);
-		require(_timeWithinTolerance(initPriceTimestamp,predTimeStamp),
+		require(_timeWithinTolerance(initPriceTimestamp,predTimestamp),
 						"Price feed timestamp and prediction time is beyond tolerance");
 
 		PriceFeedResult memory initial = PriceFeedResult(initPrice, initPriceTimestamp);
 		PriceFeedResult memory finalContainer = PriceFeedResult(0, 0);
 	
 		Prediction memory pred = Prediction(user,
-																 predTimeStamp,
+																 predTimestamp,
 																 symbol,
 																 predDirection,
 																 predDuration,
@@ -127,13 +142,13 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 																 finalContainer,
 																 ipfsCID);
 		livePredictions.push(pred);
-		userTrackRecords[user].num_pred_pending += 1;
+		userTrackRecords[user].num_pending += 1;
 	}
 
 	function _checkPredictionExpired(Prediction memory pred) private view returns (bool expired){
 		string memory symbol = pred.symbol;
 		int noww = SafeCast.toInt256(block.timestamp);
-		int predExpiry = SafeCast.toInt256(pred.predTimeStamp + pred.predDuration);
+		int predExpiry = SafeCast.toInt256(pred.predTimestamp + pred.predDuration);
 		if (noww.sub(predExpiry) > timeTolerance){
 			if(!_symbolManager.checkSymbolActive(symbol)){
 				return true;
@@ -153,9 +168,9 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		if(!_checkPredictionExpired(pred)){
 			return;
 		}
-		TrackRecord memory userRecord = userTrackRecords[pred.user];
-		userRecord.num_pred_pending = userRecord.num_pred_pending.sub(1);
-		userRecord.num_pred_error = userRecord.num_pred_error.add(1);
+		TrackRecord storage userRecord = userTrackRecords[pred.user];
+		userRecord.num_pending = userRecord.num_pending.sub(1);
+		userRecord.num_error = userRecord.num_error.add(1);
 
 		_removeFromLivePredictions(indx);
 	}
@@ -171,7 +186,7 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 			return false;
 		}
 
-		uint predExpiry = pred.predTimeStamp.add(pred.predDuration);
+		uint predExpiry = pred.predTimestamp.add(pred.predDuration);
 		(, uint feedTimestamp) = _priceFeedManager.getSymbolLatestPrice(symbol);
 
 		int diff = SafeCast.toInt256(feedTimestamp).sub(SafeCast.toInt256(predExpiry));
@@ -179,41 +194,42 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	}
 	
 	function _handlePredictionReady(uint indx) private {
-		Prediction memory pred = livePredictions[indx];
+		Prediction storage pred = livePredictions[indx];
 		if (!_checkPredictionReady(pred)) {
 			return;
 		}
-		(int price, uint feedTimestamp) = _priceFeedManager.getSymbolLatestPrice(pred.symbol);
-		PriceFeedResult memory finalPrice = PriceFeedResult(price, feedTimestamp);
-		pred.finalPrice = finalPrice;
+		(int feedPrice, uint feedTimestamp) = _priceFeedManager.getSymbolLatestPrice(pred.symbol);
+		pred.finalPrice.price = feedPrice;
+		pred.finalPrice.timestamp = feedTimestamp;
+	
 		_concludePrediction(indx);
 	}
 
-	function calculateReturn(int initialPrice, int finalPrice, bool direction, int num_decimals) private pure returns (int) {
-		int ret = finalPrice.sub(initialPrice).mul(num_decimals).div(initialPrice);
-
-		//short
-		if (!direction){
-			ret = ret.mul(-1);
+	function calculateReturn(int initialPrice, int finalPrice, bool direction, int pad) private pure returns (int) {
+		int ret;
+		if (direction){
+			ret = finalPrice.sub(initialPrice).mul(pad).div(initialPrice);
+		} else {
+			ret = initialPrice.sub(finalPrice).mul(pad).div(finalPrice);
 		}
 		return ret;
 	}
 
 	function _concludePrediction(uint indx) private {
 		Prediction memory pred = livePredictions[indx];
-		TrackRecord memory userRecord = userTrackRecords[pred.user];
+		TrackRecord storage userRecord = userTrackRecords[pred.user];
 
 		// check if correct
 		int ret = calculateReturn(
 			pred.initialPrice.price,
 			pred.finalPrice.price,
 			pred.predDirection,
-			decimals
+			_pad
 		);
 
 		// update average returns
-		int totalReturn = userRecord.avg_return.mul(SafeCast.toInt256(userRecord.num_pred_completed));
-		int newAvgReturn = totalReturn.add(ret).div(SafeCast.toInt256(userRecord.num_pred_completed.add(1)));
+		int totalReturn = userRecord.avg_return.mul(SafeCast.toInt256(userRecord.num_completed));
+		int newAvgReturn = totalReturn.add(ret).div(SafeCast.toInt256(userRecord.num_completed.add(1)));
 		userRecord.avg_return = newAvgReturn;
 
 		// if correct
@@ -221,8 +237,8 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 			userRecord.num_correct = userRecord.num_correct.add(1);
 		} 
 		
-		userRecord.num_pred_pending = userRecord.num_pred_pending.sub(1);
-		userRecord.num_pred_completed = userRecord.num_pred_pending.add(1);
+		userRecord.num_pending = userRecord.num_pending.sub(1);
+		userRecord.num_completed = userRecord.num_completed.add(1);
 
 		_removeFromLivePredictions(indx);
 	}
@@ -275,6 +291,9 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
     uint[] memory result = abi.decode(performData, (uint[]));
 		uint state = result[0];
 		uint indx = result[1];
+
+		if (indx >= livePredictions.length)
+			return;
 
 		if (state == 0){
 			_handlePredictionExpired(indx);
