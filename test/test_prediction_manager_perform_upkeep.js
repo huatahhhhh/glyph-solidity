@@ -99,7 +99,7 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
 
   describe("When there are no predictions..", async () => {
     it("nothing happens", async () => {
-      var performData = web3.eth.abi.encodeParameter('uint[]', ['0', '1']);
+      var performData = web3.eth.abi.encodeParameter('uint[2]', ['0', '1']);
       await assertNothingHappens(this.contract, this.predictFor, async () => {
         await this.contract.performUpkeep(performData);
       });
@@ -123,9 +123,9 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
     });
     describe("When prediction is not expired and expired performData called..", async () => {
       it("nothing happens", async () => {
-        var performData0 = web3.eth.abi.encodeParameter('uint[]', ['0', '0']);
-        var performData2 = web3.eth.abi.encodeParameter('uint[]', ['0', '2']);
-        var performData3 = web3.eth.abi.encodeParameter('uint[]', ['0', '3']);
+        var performData0 = web3.eth.abi.encodeParameter('uint[2]', ['0', '0']);
+        var performData2 = web3.eth.abi.encodeParameter('uint[2]', ['0', '2']);
+        var performData3 = web3.eth.abi.encodeParameter('uint[2]', ['0', '3']);
         await assertNothingHappens(this.contract, this.predictFor, async () => {
           await this.contract.performUpkeep(performData0);
         });
@@ -139,8 +139,8 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
     });
     describe("When prediction is not ready..", async () => {
       it("nothing happens", async () => {
-        var performData1 = web3.eth.abi.encodeParameter('uint[]', ['1', '1']);
-        var performData2 = web3.eth.abi.encodeParameter('uint[]', ['1', '2']);
+        var performData1 = web3.eth.abi.encodeParameter('uint[2]', ['1', '1']);
+        var performData2 = web3.eth.abi.encodeParameter('uint[2]', ['1', '2']);
         await assertNothingHappens(this.contract, this.predictFor, async () => {
           await this.contract.performUpkeep(performData2);
         });
@@ -158,7 +158,7 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
         numPredictionsBefore = await this.contract.numLivePredictions();
         userScoreBefore = await this.contract.userScore(this.predictFor);
 
-        var performData3 = web3.eth.abi.encodeParameter('uint[]', ['0', '1']);
+        var performData3 = web3.eth.abi.encodeParameter('uint[2]', ['0', '1']);
 
         await this.contract.performUpkeep(performData3);
         numPredictionsAfter = await this.contract.numLivePredictions();
@@ -228,7 +228,7 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
             numPredictionsBefore = await this.contract.numLivePredictions();
             userScoreBefore = await this.contract.userScore(this.predictFor);
 
-            var performData3 = web3.eth.abi.encodeParameter('uint[]', ['1', '3']);
+            var performData3 = web3.eth.abi.encodeParameter('uint[2]', ['1', '3']);
 
             await this.contract.performUpkeep(performData3);
             numPredictionsAfter = await this.contract.numLivePredictions();
@@ -289,7 +289,7 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
             numPredictionsBefore = await this.contract.numLivePredictions();
             userScoreBefore = await this.contract.userScore(this.predictFor);
 
-            var performData3 = web3.eth.abi.encodeParameter('uint[]', ['1', '0']);
+            var performData3 = web3.eth.abi.encodeParameter('uint[2]', ['1', '0']);
 
             await this.contract.performUpkeep(performData3);
             numPredictionsAfter = await this.contract.numLivePredictions();
@@ -357,7 +357,7 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
             numPredictionsBefore = await this.contract.numLivePredictions();
             userScoreBefore = await this.contract.userScore(this.predictFor);
 
-            var performData3 = web3.eth.abi.encodeParameter('uint[]', ['1', '3']);
+            var performData3 = web3.eth.abi.encodeParameter('uint[2]', ['1', '3']);
 
             await this.contract.performUpkeep(performData3);
             numPredictionsAfter = await this.contract.numLivePredictions();
@@ -417,7 +417,7 @@ contract('PredictionManager', ([owner, other1, upkeepChecker]) => {
             numPredictionsBefore = await this.contract.numLivePredictions();
             userScoreBefore = await this.contract.userScore(this.predictFor);
 
-            var performData3 = web3.eth.abi.encodeParameter('uint[]', ['1', '0']);
+            var performData3 = web3.eth.abi.encodeParameter('uint[2]', ['1', '0']);
 
             await this.contract.performUpkeep(performData3);
             numPredictionsAfter = await this.contract.numLivePredictions();

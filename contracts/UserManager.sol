@@ -12,6 +12,9 @@ abstract contract UserManager is Ownable, IUserManager{
 	address[] private userArray;
 	mapping(address => bool) private userData;
 
+	event UserAdded(address indexed _address);
+	event UserRemoved(address indexed _address);
+
 	function _checkUserExists(address _address) private view returns (bool) {
 		for (uint i=0; i<userArray.length; i++){
 			if (_address == userArray[i]){
@@ -26,10 +29,12 @@ abstract contract UserManager is Ownable, IUserManager{
 			userArray.push(_address);
 		}
 		_setUserActiveStatus(_address, true);
+		emit UserAdded(_address);
 	}
 
 	function removeUser(address _address) external onlyOwner{
 		_setUserActiveStatus(_address, false);
+		emit UserRemoved(_address);
 	}
 
 	function _setUserActiveStatus(address _address, bool value) private {

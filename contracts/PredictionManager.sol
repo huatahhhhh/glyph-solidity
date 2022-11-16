@@ -16,18 +16,54 @@ interface IPredictionManager {
 														string memory symbol,
 														bool predDirection,
 														uint predDuration,
-														string memory ifpsCID) 
-														external;
-	// chainlink automation
-	/*function checkUpkeep(bytes calldata checkData) external returns (bool upkeedNeeded, bytes memory performData);*/
-	/*function checkPrediction(uint predIndex);*/
-	/*function performUpkeep(bytes calldata performData) external;*/
-	/*function evaluatePrediction(uint predIndex);*/
+														string memory ipfsCID) external;
+	/*function userScore(address _address) external view returns (TrackRecord memory);*/
 }
 
-contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterface{
+contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterface, IPredictionManager{
 	using SafeMath for uint;
 	using SignedSafeMath for int;
+
+	event PredictionCreated(
+		address indexed user,
+		uint indexed predTimestamp,
+		string symbol,
+		string ipfsCID,
+		bool predDirection,
+		uint predDuration,
+		int initialPrice,
+		uint initialPriceTimestamp
+	);
+	
+	event PredictionExpired(
+		address indexed user,
+		uint indexed predTimestamp,
+		string symbol,
+		string ipfsCID
+	);
+
+	event PredictionCompleted(
+		address indexed user,
+		uint indexed predTimestamp,
+		string symbol,
+		string ipfsCID,
+		bool predDirection,
+		uint predDuration,
+		int initialPrice,
+		uint initialPriceTimestamp,
+		int finalPrice,
+		uint finalPriceTimestamp
+	);
+
+	event UserScoreUpdated(
+		uint num_pending,
+		uint num_error,
+		uint num_completed,
+		uint num_correct,
+		int avg_return
+	);
+
+	event performedUpkeep(uint state, uint indx);
 
 	struct PriceFeedResult {
 		int price;
@@ -143,6 +179,17 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 																 ipfsCID);
 		livePredictions.push(pred);
 		userTrackRecords[user].num_pending += 1;
+
+		emit PredictionCreated(
+			user,
+	  	predTimestamp,
+			symbol,
+			ipfsCID,
+			predDirection,
+			predDuration,
+			initPrice,
+			initPriceTimestamp
+		);
 	}
 
 	function _checkPredictionExpired(Prediction memory pred) private view returns (bool expired){
@@ -168,11 +215,19 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		if(!_checkPredictionExpired(pred)){
 			return;
 		}
+
 		TrackRecord storage userRecord = userTrackRecords[pred.user];
 		userRecord.num_pending = userRecord.num_pending.sub(1);
 		userRecord.num_error = userRecord.num_error.add(1);
 
 		_removeFromLivePredictions(indx);
+
+		emit PredictionExpired(
+			pred.user,
+		  pred.predTimestamp,
+			pred.symbol,
+			pred.ipfsCID
+		);
 	}
 
 	function _checkPredictionReady(Prediction memory pred) private view returns (bool){
@@ -241,6 +296,25 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 		userRecord.num_completed = userRecord.num_completed.add(1);
 
 		_removeFromLivePredictions(indx);
+		emit PredictionCompleted(
+			pred.user,
+			pred.predTimestamp,
+			pred.symbol,
+			pred.ipfsCID,
+			pred.predDirection,
+			pred.predDuration,
+			pred.initialPrice.price,
+			pred.initialPrice.timestamp,
+			pred.finalPrice.price,
+			pred.finalPrice.timestamp
+		);
+		emit UserScoreUpdated(
+			userRecord.num_pending,
+			userRecord.num_error,
+			userRecord.num_completed,
+			userRecord.num_correct,
+			userRecord.avg_return
+		);
 	}
 
 	function _removeFromLivePredictions(uint indx) private {
@@ -287,8 +361,10 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	}
 
 	function performUpkeep(bytes calldata performData) 
-		external {
-    uint[] memory result = abi.decode(performData, (uint[]));
+		external 
+		override
+	{
+    uint[2] memory result = abi.decode(performData, (uint[2]));
 		uint state = result[0];
 		uint indx = result[1];
 
