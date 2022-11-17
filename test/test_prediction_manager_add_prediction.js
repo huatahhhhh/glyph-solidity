@@ -173,7 +173,7 @@ contract('PredictionManager', ([owner, other1, other2]) => {
           "ipfsCID", 
           { from: this.owner }
         ),
-        "Prediction duration needs to be more than 2 * tolerance"
+        "Prediction duration needs to be more than 1 * tolerance"
       );
       var num_pred = await this.contract.getNumLivePredictions();
       assert.equal(num_pred, 0);

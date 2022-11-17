@@ -56,6 +56,7 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 	);
 
 	event UserScoreUpdated(
+		address user,
 		uint num_pending,
 		uint num_error,
 		uint num_completed,
@@ -159,8 +160,8 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 
 		require(_timeWithinTolerance(block.timestamp, predTimestamp),
 						"Block timestamp and prediction timestamp is beyond tolerance");
-		require(SafeCast.toInt256(predDuration) > timeTolerance.mul(2),
-						"Prediction duration needs to be more than 2 * tolerance");
+		require(SafeCast.toInt256(predDuration) > timeTolerance.mul(1),
+						"Prediction duration needs to be more than 1 * tolerance");
 
 		(int initPrice, uint initPriceTimestamp) = _priceFeedManager.getSymbolLatestPrice(symbol);
 		require(_timeWithinTolerance(initPriceTimestamp,predTimestamp),
@@ -309,6 +310,7 @@ contract PredictionManager is Ownable, UserManager, AutomationCompatibleInterfac
 			pred.finalPrice.timestamp
 		);
 		emit UserScoreUpdated(
+			pred.user,
 			userRecord.num_pending,
 			userRecord.num_error,
 			userRecord.num_completed,
